@@ -1,0 +1,67 @@
+
+src/results/*.txt
+# Ignore model checkpoints
+src/checkpoints/
+*.pt
+
+# -----------------------
+# Python
+# -----------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+*.whl
+*.so
+
+# Virtual environments
+venv/
+venv_nlp/
+.env/
+.env.*
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# -----------------------
+# Data files (large)
+# -----------------------
+*.pkl
+*.npz
+*.bin
+*.h5
+*.pt
+*.pth
+*.ckpt
+processed_data/
+data/processed/
+checkpoints/
+
+# -----------------------
+# Logs and results
+# -----------------------
+*.log
+results/
+training_history.json
+training_history.png
+translations_*.txt
+bleu_scores.json
+
+# -----------------------
+# OS generated files
+# -----------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -----------------------
+# Optional IDE configs
+# -----------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

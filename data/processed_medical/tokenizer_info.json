@@ -1,0 +1,10 @@
+{
+  "vi_model_path": "../data/processed_medical\\vi_sp.model",
+  "en_model_path": "../data/processed_medical\\en_sp.model",
+  "vi_vocab_size": 32000,
+  "en_vocab_size": 32000,
+  "pad_idx": 0,
+  "unk_idx": 1,
+  "bos_idx": 2,
+  "eos_idx": 3
+}
