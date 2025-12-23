@@ -164,7 +164,7 @@ def plot_length_distribution(src_lengths, tgt_lengths, split='train', save_path=
     
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    print(f"✅ Saved plot: {save_path}")
+    print(f" Saved plot: {save_path}")
     plt.close()
 
 def generate_data_report(data_dir='../data/processed', output_dir='../results'):
@@ -175,7 +175,7 @@ def generate_data_report(data_dir='../data/processed', output_dir='../results'):
     os.makedirs(output_dir, exist_ok=True)
     
     print("="*70)
-    print("📊 GENERATING DATA STATISTICS REPORT")
+    print(" GENERATING DATA STATISTICS REPORT")
     print("="*70)
     
     # Load data
@@ -239,42 +239,42 @@ def generate_data_report(data_dir='../data/processed', output_dir='../results'):
     with open(report_path, 'w', encoding='utf-8') as f:
         json.dump(report_clean, f, indent=2, ensure_ascii=False)
     
-    print(f"\n✅ Saved report: {report_path}")
+    print(f"\n Saved report: {report_path}")
     
     # Print summary
     print("\n" + "="*70)
-    print("📋 DATA STATISTICS SUMMARY")
+    print("DATA STATISTICS SUMMARY")
     print("="*70)
     
-    print(f"\n📊 Dataset Overview:")
+    print(f"\nDataset Overview:")
     print(f"  Total samples: {report['dataset_overview']['total_samples']:,}")
     print(f"  Train: {report['dataset_overview']['train_samples']:,}")
     print(f"  Validation: {report['dataset_overview']['val_samples']:,}")
     print(f"  Test: {report['dataset_overview']['test_samples']:,}")
     
-    print(f"\n📚 Vocabulary:")
+    print(f"\n Vocabulary:")
     print(f"  Vietnamese: {report['dataset_overview']['vi_vocab_size']:,} tokens")
     print(f"  English: {report['dataset_overview']['en_vocab_size']:,} tokens")
     
-    print(f"\n📏 Sequence Lengths (Train):")
+    print(f"\n Sequence Lengths (Train):")
     train_stats = report['splits']['train']['length_statistics']
     print(f"  Vietnamese: {train_stats['src']['mean']:.1f} ± {train_stats['src']['std']:.1f}")
     print(f"  English: {train_stats['tgt']['mean']:.1f} ± {train_stats['tgt']['std']:.1f}")
     
-    print(f"\n💡 Top 5 Vietnamese tokens:")
+    print(f"\n Top 5 Vietnamese tokens:")
     for i, token_info in enumerate(vi_vocab_stats['top_20_tokens'][:10], 1):
         print(f"  {i}. '{token_info['token']}': {token_info['count']:,} ({token_info['percentage']:.2f}%)")
     
-    print(f"\n💡 Top 5 English tokens:")
+    print(f"\n Top 5 English tokens:")
     for i, token_info in enumerate(en_vocab_stats['top_20_tokens'][:10], 1):
         print(f"  {i}. '{token_info['token']}': {token_info['count']:,} ({token_info['percentage']:.2f}%)")
     
-    print(f"\n🎯 Vocabulary Coverage (Train):")
+    print(f"\n Vocabulary Coverage (Train):")
     print(f"  VI: Top {vi_vocab_stats['coverage']['90%']:,} tokens = 90% coverage")
     print(f"  EN: Top {en_vocab_stats['coverage']['90%']:,} tokens = 90% coverage")
     
     print("\n" + "="*70)
-    print("✅✅✅ REPORT GENERATION COMPLETE!")
+    print(" REPORT GENERATION COMPLETE!")
     print("="*70)
     
     return report

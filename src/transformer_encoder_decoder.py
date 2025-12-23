@@ -1,8 +1,3 @@
-"""
-TRANSFORMER ENCODER & DECODER (FIXED)
-Xây dựng hoàn chỉnh Encoder và Decoder layers
-"""
-
 import torch
 import torch.nn as nn
 from transformer_components import (
@@ -12,26 +7,9 @@ from transformer_components import (
     LayerNorm
 )
 
-# ============================================================================
 # 1. ENCODER LAYER
-# ============================================================================
 
 class EncoderLayer(nn.Module):
-    """
-    Một layer của Transformer Encoder
-    
-    Gồm:
-    1. Multi-Head Self-Attention
-    2. Add & Norm
-    3. Feed-Forward Network
-    4. Add & Norm
-    
-    Args:
-        d_model: Dimension của model
-        n_heads: Số lượng attention heads
-        d_ff: Dimension của feed-forward network
-        dropout: Dropout rate
-    """
     def __init__(self, d_model, n_heads, d_ff, dropout=0.1):
         super().__init__()
         
@@ -46,14 +24,6 @@ class EncoderLayer(nn.Module):
         self.residual2 = ResidualConnection(d_model, dropout)
         
     def forward(self, x, mask=None):
-        """
-        Args:
-            x: Input [batch_size, seq_len, d_model]
-            mask: Mask tensor [batch_size, 1, 1, seq_len] (để mask padding)
-            
-        Returns:
-            output: [batch_size, seq_len, d_model]
-        """
         # 1. Self-Attention với Residual Connection
         x = self.residual1(x, lambda x: self.self_attention(x, x, x, mask)[0])
         
@@ -62,23 +32,10 @@ class EncoderLayer(nn.Module):
         
         return x
 
-# ============================================================================
 # 2. ENCODER
-# ============================================================================
 
 class Encoder(nn.Module):
-    """
-    Transformer Encoder - Stack của N encoder layers
-    
-    Args:
-        vocab_size: Kích thước vocabulary
-        d_model: Dimension của model
-        n_layers: Số lượng encoder layers
-        n_heads: Số lượng attention heads
-        d_ff: Dimension của feed-forward network
-        dropout: Dropout rate
-        max_len: Maximum sequence length
-    """
+
     def __init__(self, vocab_size, d_model, n_layers, n_heads, d_ff, dropout=0.1, max_len=5000):
         super().__init__()
         
@@ -100,14 +57,7 @@ class Encoder(nn.Module):
         self.norm = LayerNorm(d_model)
         
     def forward(self, src, src_mask=None):
-        """
-        Args:
-            src: Source sequence [batch_size, src_len]
-            src_mask: Source mask [batch_size, 1, 1, src_len]
-            
-        Returns:
-            output: [batch_size, src_len, d_model]
-        """
+
         # 1. Embedding + Positional Encoding
         x = self.embedding(src)
         x = self.pos_encoding(x)
@@ -121,28 +71,10 @@ class Encoder(nn.Module):
         
         return x
 
-# ============================================================================
 # 3. DECODER LAYER
-# ============================================================================
 
 class DecoderLayer(nn.Module):
-    """
-    Một layer của Transformer Decoder
-    
-    Gồm:
-    1. Masked Multi-Head Self-Attention
-    2. Add & Norm
-    3. Multi-Head Cross-Attention (với Encoder output)
-    4. Add & Norm
-    5. Feed-Forward Network
-    6. Add & Norm
-    
-    Args:
-        d_model: Dimension của model
-        n_heads: Số lượng attention heads
-        d_ff: Dimension của feed-forward network
-        dropout: Dropout rate
-    """
+
     def __init__(self, d_model, n_heads, d_ff, dropout=0.1):
         super().__init__()
         
@@ -161,16 +93,7 @@ class DecoderLayer(nn.Module):
         self.residual3 = ResidualConnection(d_model, dropout)
         
     def forward(self, x, encoder_output, src_mask=None, tgt_mask=None):
-        """
-        Args:
-            x: Target input [batch_size, tgt_len, d_model]
-            encoder_output: Encoder output [batch_size, src_len, d_model]
-            src_mask: Source mask [batch_size, 1, 1, src_len]
-            tgt_mask: Target mask [batch_size, 1, tgt_len, tgt_len] (causal mask)
-            
-        Returns:
-            output: [batch_size, tgt_len, d_model]
-        """
+
         # 1. Masked Self-Attention với Residual Connection
         x = self.residual1(x, lambda x: self.self_attention(x, x, x, tgt_mask)[0])
         
@@ -183,23 +106,10 @@ class DecoderLayer(nn.Module):
         
         return x
 
-# ============================================================================
 # 4. DECODER
-# ============================================================================
 
 class Decoder(nn.Module):
-    """
-    Transformer Decoder - Stack của N decoder layers
-    
-    Args:
-        vocab_size: Kích thước vocabulary
-        d_model: Dimension của model
-        n_layers: Số lượng decoder layers
-        n_heads: Số lượng attention heads
-        d_ff: Dimension của feed-forward network
-        dropout: Dropout rate
-        max_len: Maximum sequence length
-    """
+
     def __init__(self, vocab_size, d_model, n_layers, n_heads, d_ff, dropout=0.1, max_len=5000):
         super().__init__()
         
@@ -224,16 +134,7 @@ class Decoder(nn.Module):
         self.fc_out = nn.Linear(d_model, vocab_size)
         
     def forward(self, tgt, encoder_output, src_mask=None, tgt_mask=None):
-        """
-        Args:
-            tgt: Target sequence [batch_size, tgt_len]
-            encoder_output: Encoder output [batch_size, src_len, d_model]
-            src_mask: Source mask [batch_size, 1, 1, src_len]
-            tgt_mask: Target mask [batch_size, 1, tgt_len, tgt_len]
-            
-        Returns:
-            output: [batch_size, tgt_len, vocab_size]
-        """
+
         # 1. Embedding + Positional Encoding
         x = self.embedding(tgt)
         x = self.pos_encoding(x)
@@ -250,37 +151,16 @@ class Decoder(nn.Module):
         
         return output
 
-# ============================================================================
 # 5. MASK FUNCTIONS (FIXED)
-# ============================================================================
 
 def create_padding_mask(seq, pad_idx=0):
-    """
-    Tạo mask cho padding tokens
-    
-    Args:
-        seq: Sequence [batch_size, seq_len]
-        pad_idx: Index của padding token
-        
-    Returns:
-        mask: [batch_size, 1, 1, seq_len] (bool type)
-    """
+
     # Tạo mask: True cho non-padding, False cho padding
     mask = (seq != pad_idx).unsqueeze(1).unsqueeze(2)
     return mask  # Returns bool tensor
 
 def create_causal_mask(seq_len, device):
-    """
-    Tạo causal mask (look-ahead mask) cho decoder
-    Ngăn decoder nhìn thấy future tokens
-    
-    Args:
-        seq_len: Length của sequence
-        device: Device (cuda hoặc cpu)
-        
-    Returns:
-        mask: [1, 1, seq_len, seq_len] (bool type)
-    """
+
     # Tạo lower triangular matrix - FIXED: convert to bool
     mask = torch.tril(torch.ones(seq_len, seq_len, device=device))
     mask = mask.bool()  # Convert to bool
@@ -288,16 +168,7 @@ def create_causal_mask(seq_len, device):
     return mask
 
 def create_target_mask(tgt, pad_idx=0):
-    """
-    Tạo mask kết hợp cho target sequence (padding + causal)
-    
-    Args:
-        tgt: Target sequence [batch_size, tgt_len]
-        pad_idx: Index của padding token
-        
-    Returns:
-        mask: [batch_size, 1, tgt_len, tgt_len] (bool type)
-    """
+
     batch_size, tgt_len = tgt.size()
     device = tgt.device
     
@@ -312,9 +183,7 @@ def create_target_mask(tgt, pad_idx=0):
     
     return mask
 
-# ============================================================================
 # 6. TEST ENCODER & DECODER
-# ============================================================================
 
 if __name__ == "__main__":
     print("="*70)

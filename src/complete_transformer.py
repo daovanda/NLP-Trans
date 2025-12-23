@@ -1,8 +1,3 @@
-"""
-COMPLETE TRANSFORMER MODEL
-Mô hình Transformer hoàn chỉnh cho dịch máy Seq2Seq
-"""
-
 import torch
 import torch.nn as nn
 from transformer_encoder_decoder import (
@@ -10,25 +5,9 @@ from transformer_encoder_decoder import (
     create_padding_mask, create_target_mask
 )
 
-# ============================================================================
 # TRANSFORMER MODEL
-# ============================================================================
-
 class Transformer(nn.Module):
-    """
-    Mô hình Transformer hoàn chỉnh cho Neural Machine Translation
-    
-    Args:
-        src_vocab_size: Kích thước vocabulary source language
-        tgt_vocab_size: Kích thước vocabulary target language
-        d_model: Dimension của model (mặc định 512)
-        n_layers: Số lượng encoder/decoder layers (mặc định 6)
-        n_heads: Số lượng attention heads (mặc định 8)
-        d_ff: Dimension của feed-forward network (mặc định 2048)
-        dropout: Dropout rate (mặc định 0.1)
-        max_len: Maximum sequence length (mặc định 5000)
-        pad_idx: Index của padding token (mặc định 0)
-    """
+
     def __init__(
         self,
         src_vocab_size,
@@ -79,16 +58,6 @@ class Transformer(nn.Module):
                 nn.init.xavier_uniform_(p)
     
     def forward(self, src, tgt):
-        """
-        Forward pass
-        
-        Args:
-            src: Source sequence [batch_size, src_len]
-            tgt: Target sequence [batch_size, tgt_len]
-            
-        Returns:
-            output: Logits [batch_size, tgt_len, tgt_vocab_size]
-        """
         # Tạo masks
         src_mask = create_padding_mask(src, self.pad_idx)
         tgt_mask = create_target_mask(tgt, self.pad_idx)
@@ -102,50 +71,18 @@ class Transformer(nn.Module):
         return output
     
     def encode(self, src):
-        """
-        Chỉ chạy encoder (dùng khi inference)
-        
-        Args:
-            src: Source sequence [batch_size, src_len]
-            
-        Returns:
-            encoder_output: [batch_size, src_len, d_model]
-            src_mask: [batch_size, 1, 1, src_len]
-        """
         src_mask = create_padding_mask(src, self.pad_idx)
         encoder_output = self.encoder(src, src_mask)
         return encoder_output, src_mask
     
     def decode(self, tgt, encoder_output, src_mask):
-        """
-        Chỉ chạy decoder (dùng khi inference)
-        
-        Args:
-            tgt: Target sequence [batch_size, tgt_len]
-            encoder_output: Encoder output [batch_size, src_len, d_model]
-            src_mask: Source mask [batch_size, 1, 1, src_len]
-            
-        Returns:
-            output: Logits [batch_size, tgt_len, tgt_vocab_size]
-        """
         tgt_mask = create_target_mask(tgt, self.pad_idx)
         output = self.decoder(tgt, encoder_output, src_mask, tgt_mask)
         return output
 
-# ============================================================================
 # MODEL CONFIGURATION
-# ============================================================================
 
 def get_model_config(model_size='base'):
-    """
-    Trả về config cho các kích thước model khác nhau
-    
-    Args:
-        model_size: 'tiny', 'small', 'base', 'large'
-        
-    Returns:
-        config: Dictionary chứa hyperparameters
-    """
     configs = {
         'tiny': {
             'd_model': 256,
@@ -180,19 +117,6 @@ def get_model_config(model_size='base'):
     return configs.get(model_size, configs['base'])
 
 def create_model(src_vocab_size, tgt_vocab_size, model_size='base', pad_idx=0):
-    """
-    Tạo Transformer model với config đã chọn
-    
-    Args:
-        src_vocab_size: Kích thước source vocabulary
-        tgt_vocab_size: Kích thước target vocabulary
-        model_size: Kích thước model ('tiny', 'small', 'base', 'large')
-        pad_idx: Padding index
-        
-    Returns:
-        model: Transformer model
-        config: Model configuration
-    """
     config = get_model_config(model_size)
     
     model = Transformer(
@@ -208,30 +132,16 @@ def create_model(src_vocab_size, tgt_vocab_size, model_size='base', pad_idx=0):
     
     return model, config
 
-# ============================================================================
 # UTILITY FUNCTIONS
-# ============================================================================
 
 def count_parameters(model):
-    """
-    Đếm số lượng parameters của model
-    
-    Args:
-        model: PyTorch model
-        
-    Returns:
-        total: Tổng số parameters
-        trainable: Số parameters có thể train
-    """
     total = sum(p.numel() for p in model.parameters())
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     
     return total, trainable
 
 def print_model_info(model, model_size='base'):
-    """
-    In thông tin về model
-    """
+
     total_params, trainable_params = count_parameters(model)
     
     print("="*70)
@@ -252,10 +162,7 @@ def print_model_info(model, model_size='base'):
     print(f"  - dropout: {config['dropout']}")
     print("="*70)
 
-# ============================================================================
 # TEST COMPLETE MODEL
-# ============================================================================
-
 if __name__ == "__main__":
     print("="*70)
     print("KIỂM TRA TRANSFORMER MODEL HOÀN CHỈNH")
@@ -329,7 +236,7 @@ if __name__ == "__main__":
     print("✓ TẤT CẢ TESTS PASSED!")
     print("="*70)
     
-    print("\n📝 GỢI Ý SỬ DỤNG:")
+    print("\n GỢI Ý SỬ DỤNG:")
     print("  - Dùng 'tiny' để debug và test nhanh")
     print("  - Dùng 'small' để train trên CPU hoặc GPU nhỏ")
     print("  - Dùng 'base' để có kết quả tốt (cần GPU)")

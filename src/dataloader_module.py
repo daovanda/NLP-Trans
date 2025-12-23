@@ -1,28 +1,14 @@
-"""
-DATALOADER MODULE - TỐI ỨU HÓA BATCH PROCESSING (FIXED FOR WINDOWS)
-Xử lý batch với dynamic padding để tăng tốc huấn luyện
-"""
-
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 import pickle
 import numpy as np
 
-# ============================================================================
 # 1. CUSTOM DATASET
-# ============================================================================
+
 
 class TranslationDataset(Dataset):
-    """
-    Dataset class cho dữ liệu dịch máy
-    """
     def __init__(self, src_data, tgt_data):
-        """
-        Args:
-            src_data: List of source sequences (đã encode thành indices)
-            tgt_data: List of target sequences (đã encode thành indices)
-        """
         assert len(src_data) == len(tgt_data), "Source và Target phải có cùng số lượng mẫu"
         
         self.src_data = src_data
@@ -39,26 +25,11 @@ class TranslationDataset(Dataset):
         tgt = torch.LongTensor(self.tgt_data[idx])
         
         return src, tgt
-
-# ============================================================================
+    
 # 2. COLLATE FUNCTION - DYNAMIC PADDING
-# ============================================================================
 
 def collate_fn(batch, pad_idx=0):
-    """
-    Collate function với dynamic padding
-    Chỉ pad đến độ dài câu dài nhất trong batch, không phải max_len cố định
-    
-    Args:
-        batch: List of (src, tgt) tuples
-        pad_idx: Index của padding token
-        
-    Returns:
-        src_batch: Padded source sequences [batch_size, max_src_len]
-        tgt_batch: Padded target sequences [batch_size, max_tgt_len]
-        src_lengths: Độ dài thực của mỗi source sequence
-        tgt_lengths: Độ dài thực của mỗi target sequence
-    """
+
     # Tách source và target
     src_batch, tgt_batch = zip(*batch)
     
@@ -72,14 +43,8 @@ def collate_fn(batch, pad_idx=0):
     
     return src_batch, tgt_batch, src_lengths, tgt_lengths
 
-# ============================================================================
-# COLLATE WRAPPER - FIX CHO WINDOWS MULTIPROCESSING
-# ============================================================================
-
 class CollateWrapper:
-    """
-    Wrapper cho collate_fn để tránh lỗi pickle với lambda trên Windows
-    """
+
     def __init__(self, pad_idx=0):
         self.pad_idx = pad_idx
     
@@ -91,17 +56,7 @@ class CollateWrapper:
 # ============================================================================
 
 def create_dataloaders(processed_data, batch_size=32, num_workers=0):
-    """
-    Tạo DataLoader cho train, validation và test
-    
-    Args:
-        processed_data: Dict chứa 'train', 'validation', 'test'
-        batch_size: Kích thước batch
-        num_workers: Số worker threads (set = 0 cho Windows)
-        
-    Returns:
-        train_loader, val_loader, test_loader
-    """
+
     print("\n" + "="*70)
     print("TẠO DATALOADERS")
     print("="*70)
@@ -165,15 +120,10 @@ def create_dataloaders(processed_data, batch_size=32, num_workers=0):
     
     return train_loader, val_loader, test_loader
 
-# ============================================================================
 # 4. BUCKET SAMPLER - TỐI ƯU HƠN (OPTIONAL)
-# ============================================================================
 
 class BucketSampler(torch.utils.data.Sampler):
-    """
-    Sampler nhóm các câu có độ dài tương tự vào cùng batch
-    Giảm thiểu padding, tăng tốc huấn luyện
-    """
+
     def __init__(self, data_source, batch_size, sort_key=lambda x: len(x)):
         self.data_source = data_source
         self.batch_size = batch_size
@@ -203,11 +153,7 @@ class BucketSampler(torch.utils.data.Sampler):
         return len(self.data_source)
 
 def create_dataloaders_with_bucketing(processed_data, batch_size=32, num_workers=0):
-    """
-    Tạo DataLoader với BucketSampler để tối ưu padding
-    
-    IMPORTANT: num_workers phải = 0 trên Windows
-    """
+
     print("\n" + "="*70)
     print("TẠO DATALOADERS VỚI BUCKET SAMPLING")
     print("="*70)
@@ -269,7 +215,7 @@ def create_dataloaders_with_bucketing(processed_data, batch_size=32, num_workers
     print(f"✓ Đã tạo DataLoaders với Bucket Sampling")
     print(f"  Bucket Sampling giúp giảm padding, tăng tốc ~15-20%")
     if num_workers == 0:
-        print(f"  ⚠️  num_workers=0 (Windows compatibility mode)")
+        print(f"    num_workers=0 (Windows compatibility mode)")
     
     return train_loader, val_loader, test_loader
 
@@ -278,9 +224,7 @@ def create_dataloaders_with_bucketing(processed_data, batch_size=32, num_workers
 # ============================================================================
 
 def load_data_and_vocab():
-    """
-    Load dữ liệu và vocabulary đã xử lý
-    """
+
     print("Đang load dữ liệu và vocabulary...")
     
     with open('../data/processed/processed_data.pkl', 'rb') as f:
@@ -321,9 +265,7 @@ def test_dataloader(loader, vi_vocab, en_vocab, num_batches=2):
         print(f"    VI: {src_text}")
         print(f"    EN: {tgt_text}")
 
-# ============================================================================
 # 6. MAIN
-# ============================================================================
 
 if __name__ == "__main__":
     # Load dữ liệu

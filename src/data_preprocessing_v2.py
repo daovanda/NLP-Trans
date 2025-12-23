@@ -1,9 +1,3 @@
-"""
-DATA PREPROCESSING V2 - FIXED VERSION
-Fix: Properly save processed_data.pkl with SentencePiece tokenization
-EXTENDED: Support for parallel .txt files (medical data)
-"""
-
 import re
 import json
 import pickle
@@ -15,17 +9,13 @@ from tokenizer_sentencepiece import (
     train_tokenizers_from_csv
 )
 
-# ============================================================================
 # 1. LOAD DATASET
-# ============================================================================
-
 def load_csv_data(csv_path, vi_column='vi', en_column='en', 
                   train_ratio=0.8, val_ratio=0.1, chunk_size=50000):
-    """Load và split CSV thành train/val/test"""
     import pandas as pd, json, os
     from datasets import load_dataset
 
-    print(f"📂 Streaming CSV từ: {csv_path}")
+    print(f" Streaming CSV từ: {csv_path}")
     os.makedirs('tmp_splits', exist_ok=True)
 
     train_file = open('tmp_splits/train.jsonl', 'w', encoding='utf-8')
@@ -56,7 +46,7 @@ def load_csv_data(csv_path, vi_column='vi', en_column='en',
 
     train_file.close(); val_file.close(); test_file.close()
 
-    print("📦 Load dataset từ jsonl (không vào RAM)")
+    print(" Load dataset từ jsonl (không vào RAM)")
     return load_dataset("json", data_files={
         "train": "tmp_splits/train.jsonl",
         "validation": "tmp_splits/val.jsonl",
@@ -67,16 +57,13 @@ def load_csv_data(csv_path, vi_column='vi', en_column='en',
 def load_parallel_txt_files(train_vi_path, train_en_path, 
                             test_vi_path, test_en_path,
                             val_ratio=0.1, shuffle=True, seed=42):
-    """
-    🆕 NEW: Load dữ liệu từ 4 file .txt song song (cho dữ liệu y tế)
-    """
     from datasets import load_dataset
     
     print("\n" + "="*70)
-    print("📂 LOADING PARALLEL TEXT FILES")
+    print(" LOADING PARALLEL TEXT FILES")
     print("="*70)
     
-    print("\n📖 Reading train files...")
+    print("\n Reading train files...")
     with open(train_vi_path, 'r', encoding='utf-8') as f:
         train_vi = [line.strip() for line in f if line.strip()]
     with open(train_en_path, 'r', encoding='utf-8') as f:
@@ -88,7 +75,7 @@ def load_parallel_txt_files(train_vi_path, train_en_path,
     if len(train_vi) != len(train_en):
         raise ValueError(f"❌ Train files: Số dòng không khớp! VI: {len(train_vi)}, EN: {len(train_en)}")
     
-    print("\n📖 Reading test files...")
+    print("\nReading test files...")
     with open(test_vi_path, 'r', encoding='utf-8') as f:
         test_vi = [line.strip() for line in f if line.strip()]
     with open(test_en_path, 'r', encoding='utf-8') as f:
@@ -100,14 +87,14 @@ def load_parallel_txt_files(train_vi_path, train_en_path,
     if len(test_vi) != len(test_en):
         raise ValueError(f"❌ Test files: Số dòng không khớp! VI: {len(test_vi)}, EN: {len(test_en)}")
     
-    print(f"\n✂️ Splitting validation ({val_ratio*100:.0f}% of train)...")
+    print(f"\n Splitting validation ({val_ratio*100:.0f}% of train)...")
     
     total_train = len(train_vi)
     val_size = int(total_train * val_ratio)
     train_size = total_train - val_size
     
     if shuffle:
-        print("   🎲 Shuffling train data để đảm bảo train/val có phân bố tương đồng...")
+        print("    Shuffling train data để đảm bảo train/val có phân bố tương đồng...")
         import random
         random.seed(seed)
         
@@ -117,9 +104,9 @@ def load_parallel_txt_files(train_vi_path, train_en_path,
         train_indices = indices[:train_size]
         val_indices = indices[train_size:]
         
-        print(f"   ✅ Shuffled {total_train:,} pairs (seed={seed})")
+        print(f"    Shuffled {total_train:,} pairs (seed={seed})")
     else:
-        print("   ⚠️ No shuffle - sử dụng split tuần tự")
+        print("    No shuffle - sử dụng split tuần tự")
         train_indices = list(range(train_size))
         val_indices = list(range(train_size, total_train))
     
@@ -148,7 +135,7 @@ def load_parallel_txt_files(train_vi_path, train_en_path,
     
     print(f"   Test: {len(test_vi):,} pairs")
     
-    print("\n📦 Loading as HuggingFace dataset...")
+    print("\n Loading as HuggingFace dataset...")
     
     dataset = load_dataset("json", data_files={
         "train": "tmp_splits/train.jsonl",
@@ -156,15 +143,10 @@ def load_parallel_txt_files(train_vi_path, train_en_path,
         "test": "tmp_splits/test.jsonl"
     })
     
-    print("✅ Dataset loaded successfully!")
+    print(" Dataset loaded successfully!")
     
     return dataset
-
-
-# ============================================================================
 # 2. CLEANING
-# ============================================================================
-
 def clean_text(text: str, lang: str = 'vi') -> str:
     """Làm sạch văn bản"""
     if not text or not isinstance(text, str):
@@ -235,7 +217,7 @@ def clean_dataset(dataset):
     for f in paths.values(): 
         f.close()
     
-    print("\n📊 CLEANING STATISTICS:")
+    print("\nCLEANING STATISTICS:")
     for split in ['train', 'validation', 'test']:
         total = stats[split]['total']
         filtered = stats[split]['filtered']
@@ -257,10 +239,8 @@ def clean_dataset(dataset):
         for split in ['train', 'validation', 'test']
     }
     return cleaned
-
-# ============================================================================
+    
 # 3. PREPARE DATA WITH SENTENCEPIECE
-# ============================================================================
 
 def prepare_data_with_sentencepiece(cleaned_data, vi_tokenizer, en_tokenizer, max_len=100):
     """
@@ -315,7 +295,7 @@ def prepare_data_with_sentencepiece(cleaned_data, vi_tokenizer, en_tokenizer, ma
                 tgt_data.append(tgt_tokens)
                 
             except Exception as e:
-                print(f"\n⚠️ Warning: Failed to encode:")
+                print(f"\n Warning: Failed to encode:")
                 print(f"   VI: {vi_text[:50]}...")
                 print(f"   EN: {en_text[:50]}...")
                 print(f"   Error: {e}")
@@ -337,7 +317,7 @@ def prepare_data_with_sentencepiece(cleaned_data, vi_tokenizer, en_tokenizer, ma
             print(f"  Avg target length: {avg_tgt_len:.1f}")
     
     print("\n" + "="*70)
-    print("📊 TOKENIZATION SUMMARY")
+    print(" TOKENIZATION SUMMARY")
     print("="*70)
     for split in ['train', 'validation', 'test']:
         total = stats[split]['total']
@@ -350,10 +330,7 @@ def prepare_data_with_sentencepiece(cleaned_data, vi_tokenizer, en_tokenizer, ma
     
     return processed_data
 
-
-# ============================================================================
 # 4. SAVE/LOAD
-# ============================================================================
 
 def save_data_v2(cleaned_data, vi_tokenizer, en_tokenizer, processed_data, output_dir='../data/processed'):
     """
@@ -365,27 +342,27 @@ def save_data_v2(cleaned_data, vi_tokenizer, en_tokenizer, processed_data, outpu
     
     os.makedirs(output_dir, exist_ok=True)
     
-    print("\n📝 Saving cleaned_data.json...")
+    print("\nSaving cleaned_data.json...")
     with open(os.path.join(output_dir, 'cleaned_data.json'), 'w', encoding='utf-8') as f:
         json.dump(cleaned_data, f, ensure_ascii=False, indent=2)
-    print("✅ Đã lưu cleaned_data.json")
+    print(" Đã lưu cleaned_data.json")
     
-    print("\n💾 Saving processed_data.pkl...")
+    print("\n Saving processed_data.pkl...")
     processed_path = os.path.join(output_dir, 'processed_data.pkl')
     with open(processed_path, 'wb') as f:
         pickle.dump(processed_data, f)
     
     if os.path.exists(processed_path):
         file_size = os.path.getsize(processed_path) / (1024 * 1024)
-        print(f"✅ Đã lưu processed_data.pkl ({file_size:.2f} MB)")
+        print(f" Đã lưu processed_data.pkl ({file_size:.2f} MB)")
         
         with open(processed_path, 'rb') as f:
             verify_data = pickle.load(f)
-        print(f"✅ Verified: {len(verify_data['train']['src']):,} train samples")
+        print(f" Verified: {len(verify_data['train']['src']):,} train samples")
     else:
-        print("❌ ERROR: processed_data.pkl was NOT created!")
+        print("ERROR: processed_data.pkl was NOT created!")
     
-    print("\n📋 Saving tokenizer_info.json...")
+    print("\n Saving tokenizer_info.json...")
     tokenizer_info = {
         'vi_model_path': os.path.join(output_dir, 'vi_sp.model'),
         'en_model_path': os.path.join(output_dir, 'en_sp.model'),
@@ -399,15 +376,15 @@ def save_data_v2(cleaned_data, vi_tokenizer, en_tokenizer, processed_data, outpu
     
     with open(os.path.join(output_dir, 'tokenizer_info.json'), 'w') as f:
         json.dump(tokenizer_info, f, indent=2)
-    print("✅ Đã lưu tokenizer_info.json")
+    print(" Đã lưu tokenizer_info.json")
     
-    print(f"\n📂 Tất cả files đã được lưu vào: {output_dir}")
-    print("\n📋 Files created:")
+    print(f"\n Tất cả files đã được lưu vào: {output_dir}")
+    print("\n Files created:")
     for filename in os.listdir(output_dir):
         filepath = os.path.join(output_dir, filename)
         if os.path.isfile(filepath):
             size_mb = os.path.getsize(filepath) / (1024 * 1024)
-            print(f"  ✅ {filename} ({size_mb:.2f} MB)")
+            print(f"  {filename} ({size_mb:.2f} MB)")
 
 def load_tokenizers(data_dir='../data/processed'):
     """
@@ -416,15 +393,13 @@ def load_tokenizers(data_dir='../data/processed'):
     vi_model_path = os.path.join(data_dir, 'vi_sp.model')
     en_model_path = os.path.join(data_dir, 'en_sp.model')
     
-    print("📚 Loading tokenizers...")
+    print("Loading tokenizers...")
     vi_tokenizer = SentencePieceTokenizer(vi_model_path)
     en_tokenizer = SentencePieceTokenizer(en_model_path)
     
     return vi_tokenizer, en_tokenizer
 
-# ============================================================================
 # 5. TRAIN TOKENIZERS FROM TXT FILES
-# ============================================================================
 
 def train_tokenizers_from_txt(
     vi_txt_path,
@@ -434,16 +409,13 @@ def train_tokenizers_from_txt(
     en_vocab_size=32000,
     model_type='bpe'
 ):
-    """
-    🆕 NEW: Train SentencePiece tokenizers từ file .txt
-    """
     import sentencepiece as spm
     
-    print("\n🔧 Training SentencePiece tokenizers from .txt files...")
+    print("\n Training SentencePiece tokenizers from .txt files...")
     
     os.makedirs(output_dir, exist_ok=True)
     
-    print(f"\n📘 Training Vietnamese tokenizer (vocab_size={vi_vocab_size})...")
+    print(f"\n Training Vietnamese tokenizer (vocab_size={vi_vocab_size})...")
     spm.SentencePieceTrainer.train(
         input=vi_txt_path,
         model_prefix=os.path.join(output_dir, 'vi_sp'),
@@ -456,9 +428,9 @@ def train_tokenizers_from_txt(
         character_coverage=0.9995,
         num_threads=os.cpu_count()
     )
-    print("✅ Vietnamese tokenizer trained!")
+    print("Vietnamese tokenizer trained!")
     
-    print(f"\n📗 Training English tokenizer (vocab_size={en_vocab_size})...")
+    print(f"\nTraining English tokenizer (vocab_size={en_vocab_size})...")
     spm.SentencePieceTrainer.train(
         input=en_txt_path,
         model_prefix=os.path.join(output_dir, 'en_sp'),
@@ -471,21 +443,18 @@ def train_tokenizers_from_txt(
         character_coverage=0.9995,
         num_threads=os.cpu_count()
     )
-    print("✅ English tokenizer trained!")
+    print("English tokenizer trained!")
     
     vi_tokenizer = SentencePieceTokenizer(os.path.join(output_dir, 'vi_sp.model'))
     en_tokenizer = SentencePieceTokenizer(os.path.join(output_dir, 'en_sp.model'))
     
-    print(f"\n📊 Tokenizer info:")
+    print(f"\n Tokenizer info:")
     print(f"   VI vocab size: {len(vi_tokenizer):,}")
     print(f"   EN vocab size: {len(en_tokenizer):,}")
     
     return vi_tokenizer, en_tokenizer
 
-
-# ============================================================================
 # 6. MAIN PIPELINE V2
-# ============================================================================
 
 def main_v2(
     csv_path,
@@ -527,7 +496,7 @@ def main_v2(
             model_type='bpe'
         )
     else:
-        print("📚 Loading existing tokenizers...")
+        print(" Loading existing tokenizers...")
         vi_tokenizer = SentencePieceTokenizer(vi_model_path)
         en_tokenizer = SentencePieceTokenizer(en_model_path)
     
@@ -537,7 +506,7 @@ def main_v2(
     
     dataset = load_csv_data(csv_path, csv_vi_col, csv_en_col)
     
-    print("\n📊 THỐNG KÊ DỮ LIỆU:")
+    print("\n THỐNG KÊ DỮ LIỆU:")
     for split in dataset.keys():
         print(f"  - {split}: {len(dataset[split])} cặp câu")
     
@@ -563,13 +532,13 @@ def main_v2(
     
     pkl_path = os.path.join(output_dir, 'processed_data.pkl')
     if os.path.exists(pkl_path):
-        print(f"\n✅ processed_data.pkl exists!")
+        print(f"\n processed_data.pkl exists!")
         print(f"   Size: {os.path.getsize(pkl_path) / (1024*1024):.2f} MB")
         
         with open(pkl_path, 'rb') as f:
             verify_data = pickle.load(f)
         
-        print(f"\n📊 Verified content:")
+        print(f"\n Verified content:")
         for split in ['train', 'validation', 'test']:
             src_count = len(verify_data[split]['src'])
             tgt_count = len(verify_data[split]['tgt'])
@@ -585,46 +554,44 @@ def main_v2(
             print(f"      Max target token: {max_tgt} (vocab: {len(en_tokenizer)})")
             
             if max_src >= len(vi_tokenizer):
-                print(f"      ❌ ERROR: Token {max_src} >= vocab size {len(vi_tokenizer)}")
+                print(f"       ERROR: Token {max_src} >= vocab size {len(vi_tokenizer)}")
             elif max_tgt >= len(en_tokenizer):
-                print(f"      ❌ ERROR: Token {max_tgt} >= vocab size {len(en_tokenizer)}")
+                print(f"      ERROR: Token {max_tgt} >= vocab size {len(en_tokenizer)}")
             else:
-                print(f"      ✅ All tokens within range")
+                print(f"      z All tokens within range")
     else:
-        print(f"\n❌ ERROR: processed_data.pkl NOT found at {pkl_path}")
+        print(f"\n ERROR: processed_data.pkl NOT found at {pkl_path}")
     
     print("\n" + "="*70)
-    print("✅✅✅ HOÀN THÀNH XỬ LÝ DỮ LIỆU! ✅✅✅")
+    print("HOÀN THÀNH XỬ LÝ DỮ LIỆU!")
     print("="*70)
-    print(f"\n📊 Tóm tắt:")
+    print(f"\n Tóm tắt:")
     print(f"  - Kích thước từ điển VI: {len(vi_tokenizer):,}")
     print(f"  - Kích thước từ điển EN: {len(en_tokenizer):,}")
     print(f"  - Train samples: {len(processed_data['train']['src']):,}")
     print(f"  - Validation samples: {len(processed_data['validation']['src']):,}")
     print(f"  - Test samples: {len(processed_data['test']['src']):,}")
     
-    print(f"\n💡 So sánh với vocab cũ:")
+    print(f"\n So sánh với vocab cũ:")
     print(f"  - Cũ: 174,608 (VI) + 251,853 (EN) = 426,461 tokens")
     print(f"  - Mới: {len(vi_tokenizer):,} (VI) + {len(en_tokenizer):,} (EN) = {len(vi_tokenizer) + len(en_tokenizer):,} tokens")
     print(f"  - Giảm: {(1 - (len(vi_tokenizer) + len(en_tokenizer)) / 426461) * 100:.1f}%")
     
-    print(f"\n🎯 Ưu điểm SentencePiece:")
-    print(f"  ✅ Vocab nhỏ hơn 5-10x → Model nhỏ hơn, train nhanh hơn")
-    print(f"  ✅ Xử lý được từ mới (NO UNK tokens!)")
-    print(f"  ✅ Tốt cho tiếng Việt có dấu")
-    print(f"  ✅ Không cần retrain tokenizer khi có data mới")
-    print(f"  ✅ Đã loại bỏ emoji, ký tự Nhật/Hàn/Trung")
+    print(f"\n Ưu điểm SentencePiece:")
+    print(f"   Vocab nhỏ hơn 5-10x → Model nhỏ hơn, train nhanh hơn")
+    print(f"   Xử lý được từ mới (NO UNK tokens!)")
+    print(f"   Tốt cho tiếng Việt có dấu")
+    print(f"   Không cần retrain tokenizer khi có data mới")
+    print(f"   Đã loại bỏ emoji, ký tự Nhật/Hàn/Trung")
     
-    print(f"\n📦 Files to upload to Kaggle:")
+    print(f"\n Files to upload to Kaggle:")
     print(f"  1. vi_sp.model")
     print(f"  2. en_sp.model")
     print(f"  3. cleaned_data.json (for reference)")
     print(f"  4. processed_data.pkl (NEW - with SentencePiece IDs)")
     print(f"  5. tokenizer_info.json")
 
-# ============================================================================
-# 7. 🆕 MAIN PIPELINE FOR MEDICAL DATA (TXT FILES)
-# ============================================================================
+# 7. MAIN PIPELINE FOR MEDICAL DATA (TXT FILES)
 
 def main_txt_pipeline(
     train_vi_path,
@@ -639,25 +606,9 @@ def main_txt_pipeline(
     seed=42,
     retrain_tokenizer=True
 ):
-    """
-    🆕 NEW: Pipeline hoàn chỉnh cho dữ liệu .txt song song (y tế)
-    
-    Args:
-        train_vi_path: Đường dẫn train.vi.txt
-        train_en_path: Đường dẫn train.en.txt
-        test_vi_path: Đường dẫn test.vi.txt
-        test_en_path: Đường dẫn test.en.txt
-        output_dir: Thư mục output
-        vi_vocab_size: Vocab size tiếng Việt
-        en_vocab_size: Vocab size tiếng Anh
-        val_ratio: Tỷ lệ validation
-        shuffle: Shuffle trước khi split
-        seed: Random seed
-        retrain_tokenizer: Train lại tokenizer
-    """
     
     print("\n" + "="*70)
-    print("🏥 MEDICAL DATA PREPROCESSING PIPELINE")
+    print(" MEDICAL DATA PREPROCESSING PIPELINE")
     print("="*70)
     
     os.makedirs(output_dir, exist_ok=True)
@@ -672,7 +623,7 @@ def main_txt_pipeline(
     )
     
     # Stats
-    print("\n📊 THỐNG KÊ DỮ LIỆU:")
+    print("\n THỐNG KÊ DỮ LIỆU:")
     for split in dataset.keys():
         print(f"  - {split}: {len(dataset[split])} cặp câu")
     
@@ -696,7 +647,7 @@ def main_txt_pipeline(
             model_type='bpe'
         )
     else:
-        print("📚 Loading existing tokenizers...")
+        print("Loading existing tokenizers...")
         vi_tokenizer = SentencePieceTokenizer(vi_model_path)
         en_tokenizer = SentencePieceTokenizer(en_model_path)
     
@@ -730,18 +681,18 @@ def main_txt_pipeline(
     
     pkl_path = os.path.join(output_dir, 'processed_data.pkl')
     if os.path.exists(pkl_path):
-        print(f"\n✅ processed_data.pkl exists!")
+        print(f"\n processed_data.pkl exists!")
         print(f"   Size: {os.path.getsize(pkl_path) / (1024*1024):.2f} MB")
         
         with open(pkl_path, 'rb') as f:
             verify_data = pickle.load(f)
         
-        print(f"\n📊 Verified content:")
+        print(f"\n Verified content:")
         for split in ['train', 'validation', 'test']:
             print(f"   {split}: {len(verify_data[split]['src']):,} samples")
     
     print("\n" + "="*70)
-    print("✅✅✅ HOÀN TẤT! ✅✅✅")
+    print("HOÀN TẤT! ")
     print("="*70)
     
     return processed_data, vi_tokenizer, en_tokenizer
@@ -756,7 +707,7 @@ def quick_load(data_dir='../data/processed'):
     Hàm tiện ích để load nhanh processed data và tokenizers
     """
     
-    print("⚡ Quick loading data and tokenizers...")
+    print(" Quick loading data and tokenizers...")
     
     # Load processed data
     with open(os.path.join(data_dir, 'processed_data.pkl'), 'rb') as f:
@@ -765,7 +716,7 @@ def quick_load(data_dir='../data/processed'):
     # Load tokenizers
     vi_tokenizer, en_tokenizer = load_tokenizers(data_dir)
     
-    print("✅ Loaded successfully!")
+    print("Loaded successfully!")
     print(f"   Train: {len(processed_data['train']['src']):,} samples")
     print(f"   Val: {len(processed_data['validation']['src']):,} samples")
     print(f"   Test: {len(processed_data['test']['src']):,} samples")
@@ -774,10 +725,7 @@ def quick_load(data_dir='../data/processed'):
     
     return processed_data, vi_tokenizer, en_tokenizer
 
-
-# ============================================================================
 # 9. MAIN
-# ============================================================================
 
 if __name__ == "__main__":
     import argparse
@@ -786,14 +734,6 @@ if __name__ == "__main__":
         description='Data Preprocessing V2 with SentencePiece (CSV or TXT)',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  # CSV mode (general translation data)
-  python data_preprocessing_v2.py --mode csv --csv_path data.csv
-  
-  # TXT mode (medical parallel text files)
-  python data_preprocessing_v2.py --mode txt \\
-      --train_vi train.vi.txt --train_en train.en.txt \\
-      --test_vi test.vi.txt --test_en test.en.txt
         """
     )
     

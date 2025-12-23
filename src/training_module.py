@@ -1,8 +1,3 @@
-"""
-PHẦN C: HUẤN LUYỆN VÀ ĐÁNH GIÁ (OPTIMIZED FOR COLAB)
-Training loop với checkpoint theo batch và mixed precision
-"""
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -14,9 +9,7 @@ import os
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-# ============================================================================
 # 1. LABEL SMOOTHING CROSS ENTROPY LOSS
-# ============================================================================
 
 class LabelSmoothingLoss(nn.Module):
     """Label Smoothing Cross Entropy Loss"""
@@ -44,9 +37,7 @@ class LabelSmoothingLoss(nn.Module):
         
         return loss
 
-# ============================================================================
 # 2. LEARNING RATE SCHEDULER
-# ============================================================================
 
 class TransformerLRScheduler(_LRScheduler):
     """Learning Rate Scheduler với Warmup"""
@@ -66,28 +57,17 @@ class TransformerLRScheduler(_LRScheduler):
         )
         return [lr for _ in self.base_lrs]
 
-# ============================================================================
 # 3. PERPLEXITY METRIC
-# ============================================================================
 
 def calculate_perplexity(loss):
     """Tính Perplexity từ loss"""
     return math.exp(min(loss, 100))
 
-# ============================================================================
 # 4. SAVE/LOAD CHECKPOINT - OPTIMIZED
-# ============================================================================
 
 def save_checkpoint(model, optimizer, scheduler, epoch, batch_idx, 
                    train_loss, val_loss, checkpoint_dir, history=None, 
                    scaler=None, is_best=False):
-    """
-    Lưu checkpoint với đầy đủ thông tin
-    
-    Args:
-        is_best: Nếu True, lưu thêm bản best_model.pt
-        scaler: GradScaler cho mixed precision
-    """
     checkpoint = {
         'epoch': epoch,
         'batch_idx': batch_idx,
@@ -123,12 +103,6 @@ def save_checkpoint(model, optimizer, scheduler, epoch, batch_idx,
 
 def load_checkpoint(model, checkpoint_path, device, optimizer=None, 
                    scheduler=None, scaler=None):
-    """
-    Load checkpoint và resume training
-    
-    Returns:
-        model, optimizer, scheduler, epoch, batch_idx, history, scaler
-    """
     print(f"Loading checkpoint from {checkpoint_path}...")
     checkpoint = torch.load(checkpoint_path, map_location=device)
     
@@ -156,24 +130,11 @@ def load_checkpoint(model, checkpoint_path, device, optimizer=None,
     
     return model, optimizer, scheduler, epoch, batch_idx, history, scaler
 
-# ============================================================================
 # 5. TRAINING FUNCTION - OPTIMIZED WITH MIXED PRECISION
-# ============================================================================
 
 def train_epoch(model, train_loader, optimizer, scheduler, criterion, 
                 device, epoch, checkpoint_dir, save_every_batches=500,
                 use_amp=True, history=None, start_batch=0):
-    """
-    Train một epoch với:
-    - Mixed Precision (FP16) để tăng tốc 2x
-    - Lưu checkpoint theo batch
-    - Gradient accumulation
-    
-    Args:
-        save_every_batches: Lưu checkpoint mỗi N batches
-        use_amp: Sử dụng Automatic Mixed Precision
-        start_batch: Batch bắt đầu (nếu resume)
-    """
     model.train()
     
     # Mixed precision scaler
@@ -242,7 +203,7 @@ def train_epoch(model, train_loader, optimizer, scheduler, criterion,
         # Lưu checkpoint theo batch
         if (batch_idx + 1) % save_every_batches == 0:
             avg_batch_loss = batch_loss / batch_tokens
-            print(f"\n💾 Saving checkpoint at batch {batch_idx + 1}...")
+            print(f"\n Saving checkpoint at batch {batch_idx + 1}...")
             
             checkpoint_path, _ = save_checkpoint(
                 model, optimizer, scheduler, epoch, batch_idx + 1,
@@ -259,9 +220,7 @@ def train_epoch(model, train_loader, optimizer, scheduler, criterion,
     
     return avg_loss, avg_perplexity, scaler
 
-# ============================================================================
 # 6. VALIDATION FUNCTION
-# ============================================================================
 
 def validate(model, val_loader, criterion, device):
     """Đánh giá trên validation set"""
@@ -289,9 +248,7 @@ def validate(model, val_loader, criterion, device):
     
     return avg_loss, avg_perplexity
 
-# ============================================================================
 # 7. MAIN TRAINING LOOP - OPTIMIZED
-# ============================================================================
 
 def train_model(
     model,
@@ -308,14 +265,7 @@ def train_model(
     start_epoch=1,
     use_amp=True
 ):
-    """
-    Huấn luyện model với tối ưu hóa cho Colab
-    
-    Args:
-        save_every_batches: Lưu checkpoint mỗi N batches (quan trọng!)
-        start_epoch: Epoch bắt đầu (nếu resume)
-        use_amp: Automatic Mixed Precision (tăng tốc 2x)
-    """
+   
     os.makedirs(checkpoint_dir, exist_ok=True)
     
     # Check xem có checkpoint để resume không
@@ -356,16 +306,16 @@ def train_model(
     
     # Thử load checkpoint nếu có
     if os.path.exists(latest_checkpoint):
-        print("🔄 Found existing checkpoint. Resuming training...")
+        print("Found existing checkpoint. Resuming training...")
         model, optimizer, scheduler, start_epoch, start_batch, history, scaler = \
             load_checkpoint(model, latest_checkpoint, device, optimizer, 
                           scheduler, GradScaler() if use_amp else None)
-        print(f"▶️  Resuming from Epoch {start_epoch}, Batch {start_batch}")
+        print(f"  Resuming from Epoch {start_epoch}, Batch {start_batch}")
     
     best_val_loss = float('inf')
     
     print("="*70)
-    print("🚀 BẮT ĐẦU HUẤN LUYỆN")
+    print("BẮT ĐẦU HUẤN LUYỆN")
     print("="*70)
     print(f"Device: {device}")
     print(f"Mixed Precision (AMP): {use_amp}")
@@ -411,7 +361,7 @@ def train_model(
         is_best = val_loss < best_val_loss
         if is_best:
             best_val_loss = val_loss
-            print(f"  🏆 New best model!")
+            print(f"  New best model!")
         
         checkpoint_path, best_path = save_checkpoint(
             model, optimizer, scheduler, epoch, 0,
@@ -430,9 +380,8 @@ def train_model(
     
     return history
 
-# ============================================================================
 # 8. PLOT TRAINING HISTORY
-# ============================================================================
+
 
 def plot_training_history(history, save_path='training_history.png'):
     """Vẽ đồ thị training history"""

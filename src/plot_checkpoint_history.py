@@ -98,8 +98,8 @@ def plot_all_in_one(history, save_path, title=""):
 
 
 if __name__ == "__main__":
-    ckpt_en_vi = "checkpoints/en_vi/best_en_vi_model.pt"
-    ckpt_vi_en = "checkpoints/vi_en/best_vi_en_model.pt"
+    ckpt_en_vi = "checkpoints/en_vi/best_model_en_vi_16.pt"
+    ckpt_vi_en = "checkpoints/vi_en/best_model_vi_en_16.pt"
 
     output_dir = "training_plots"
     os.makedirs(output_dir, exist_ok=True)

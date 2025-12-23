@@ -1,7 +1,3 @@
-"""
-SENTENCEPIECE TOKENIZER - Xử lý UNK TOKENS
-Thay thế Vocabulary cũ bằng SentencePiece để handle từ mới
-"""
 
 import sentencepiece as spm
 import os
@@ -11,9 +7,7 @@ import unicodedata
 from pathlib import Path
 from tqdm import tqdm
 
-# ============================================================================
 # 0. TEXT CLEANING FOR TOKENIZER TRAINING
-# ============================================================================
 
 def is_valid_english_char(char):
     """Kiểm tra ký tự có phải English hợp lệ không"""
@@ -84,9 +78,7 @@ def is_valid_sentence(text, lang='en', min_words=2, max_words=100):
     
     return True
 
-# ============================================================================
 # 1. TRAIN SENTENCEPIECE MODEL
-# ============================================================================
 
 def train_sentencepiece_model(
     input_file,
@@ -126,8 +118,8 @@ def train_sentencepiece_model(
     model_path = f"{model_prefix}.model"
     vocab_path = f"{model_prefix}.vocab"
     
-    print(f"   ✅ Model saved: {model_path}")
-    print(f"   ✅ Vocab saved: {vocab_path}")
+    print(f"   Model saved: {model_path}")
+    print(f"   Vocab saved: {vocab_path}")
     
     return model_path, vocab_path
 
@@ -136,7 +128,7 @@ def prepare_corpus_file(data, output_file, language='vi'):
     """
     Chuẩn bị file corpus từ dữ liệu để train SentencePiece
     """
-    print(f"\n📝 Preparing corpus file: {output_file}")
+    print(f"\n Preparing corpus file: {output_file}")
     
     with open(output_file, 'w', encoding='utf-8') as f:
         if isinstance(data, dict):
@@ -153,19 +145,14 @@ def prepare_corpus_file(data, output_file, language='vi'):
             if text and text.strip():
                 f.write(text.strip() + '\n')
     
-    print(f"   ✅ Wrote {len(sentences)} sentences")
+    print(f"    Wrote {len(sentences)} sentences")
     return output_file
 
 
-# ============================================================================
 # 2. SENTENCEPIECE TOKENIZER WRAPPER
-# ============================================================================
 
 class SentencePieceTokenizer:
-    """
-    Wrapper cho SentencePiece để dễ sử dụng
-    Tương thích với code cũ (có encode/decode)
-    """
+
     def __init__(self, model_path):
         """
         Args:
@@ -184,7 +171,7 @@ class SentencePieceTokenizer:
         self.SOS_TOKEN = '<s>'
         self.EOS_TOKEN = '</s>'
         
-        print(f"✅ Loaded SentencePiece model: {model_path}")
+        print(f" Loaded SentencePiece model: {model_path}")
         print(f"   Vocab size: {len(self.sp)}")
         print(f"   PAD_IDX: {self.PAD_IDX}")
         print(f"   UNK_IDX: {self.UNK_IDX}")
@@ -290,12 +277,9 @@ class SentencePieceTokenizer:
         }
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2)
-        print(f"✅ Saved tokenizer config: {config_path}")
+        print(f" Saved tokenizer config: {config_path}")
 
-
-# ============================================================================
 # 3. PIPELINE: TRAIN TOKENIZERS Từ CSV
-# ============================================================================
 
 def train_tokenizers_from_csv(
     csv_path,
@@ -320,7 +304,7 @@ def train_tokenizers_from_csv(
     
     import csv
 
-    print(f"\n📂 Reading CSV with cleaning: {csv_path}")
+    print(f"\n Reading CSV with cleaning: {csv_path}")
 
     vi_corpus_file = os.path.join(output_dir, 'vi_corpus.txt')
     en_corpus_file = os.path.join(output_dir, 'en_corpus.txt')
@@ -354,11 +338,11 @@ def train_tokenizers_from_csv(
             if sample_size and row_count >= sample_size:
                 break
 
-    print(f"   ✅ Total rows processed: {row_count}")
-    print(f"   ✅ Vietnamese valid sentences: {vi_count}")
-    print(f"   ✅ English valid sentences: {en_count}")
-    print(f"   ✅ Vietnamese corpus: {vi_corpus_file}")
-    print(f"   ✅ English corpus: {en_corpus_file}")
+    print(f"    Total rows processed: {row_count}")
+    print(f"    Vietnamese valid sentences: {vi_count}")
+    print(f"    English valid sentences: {en_count}")
+    print(f"    Vietnamese corpus: {vi_corpus_file}")
+    print(f"    English corpus: {en_corpus_file}")
 
     print("\n" + "="*70)
     print("🇻🇳 TRAINING VIETNAMESE TOKENIZER")
@@ -387,7 +371,7 @@ def train_tokenizers_from_csv(
     )
     
     print("\n" + "="*70)
-    print("📚 LOADING TOKENIZERS")
+    print(" LOADING TOKENIZERS")
     print("="*70)
     
     vi_tokenizer = SentencePieceTokenizer(f"{vi_model_prefix}.model")
@@ -397,7 +381,7 @@ def train_tokenizers_from_csv(
     en_tokenizer.save_config(os.path.join(output_dir, 'en_tokenizer_config.json'))
     
     print("\n" + "="*70)
-    print("🧪 TESTING TOKENIZERS")
+    print(" TESTING TOKENIZERS")
     print("="*70)
     
     vi_test = "Xin chào, tôi là một sinh viên đang học về trí tuệ nhân tạo."
@@ -422,35 +406,32 @@ def train_tokenizers_from_csv(
     print(f"   IDs: {en_ids[:20]}...")
     print(f"   Decoded: {en_decoded}")
     
-    print(f"\n🔍 Testing UNK handling:")
+    print(f"\n Testing UNK handling:")
     unk_test = "Thisjsdfklsjdfkljsdfisacompletelynewword"
     unk_ids = en_tokenizer.encode(unk_test)
     unk_pieces = en_tokenizer.encode_as_pieces(unk_test)
     unk_decoded = en_tokenizer.decode(unk_ids)
     print(f"   Input: {unk_test}")
     print(f"   Pieces: {unk_pieces}")
-    print(f"   ✅ No UNK! Broken into subwords")
+    print(f"    No UNK! Broken into subwords")
     print(f"   Decoded: {unk_decoded}")
     
     print("\n" + "="*70)
-    print("✅✅✅ HOÀN THÀNH TRAINING TOKENIZERS!")
+    print(" HOÀN THÀNH TRAINING TOKENIZERS!")
     print("="*70)
-    print(f"\n📊 Summary:")
+    print(f"\n Summary:")
     print(f"   Vietnamese vocab: {len(vi_tokenizer):,}")
     print(f"   English vocab: {len(en_tokenizer):,}")
     print(f"   Model files: {output_dir}/vi_sp.model, {output_dir}/en_sp.model")
-    print(f"\n💡 Ưu điểm:")
-    print(f"   ✅ Vocab nhỏ hơn 5-10x so với word-based")
-    print(f"   ✅ Xử lý được từ mới (no UNK!)")
-    print(f"   ✅ Tốt cho cả tiếng Việt có dấu")
-    print(f"   ✅ Đã loại bỏ emoji, ký tự Nhật/Hàn/Trung")
+    print(f"\n Ưu điểm:")
+    print(f"    Vocab nhỏ hơn 5-10x so với word-based")
+    print(f"    Xử lý được từ mới (no UNK!)")
+    print(f"    Tốt cho cả tiếng Việt có dấu")
+    print(f"    Đã loại bỏ emoji, ký tự Nhật/Hàn/Trung")
     
     return vi_tokenizer, en_tokenizer
 
-
-# ============================================================================
 # 4. MAIN - VÍ DỤ SỬ DỤNG
-# ============================================================================
 
 if __name__ == "__main__":
     import argparse
@@ -488,7 +469,7 @@ if __name__ == "__main__":
     )
     
     print("\n" + "="*70)
-    print("🎯 CÁCH SỬ DỤNG TRONG CODE CỦA BẠN:")
+    print(" CÁCH SỬ DỤNG TRONG CODE CỦA BẠN:")
     print("="*70)
     print("""
 # Load tokenizers

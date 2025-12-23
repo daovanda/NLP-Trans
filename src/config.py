@@ -1,14 +1,7 @@
-"""
-CONFIGURATION FILE - OPTIMIZED FOR GOOGLE COLAB
-Cấu hình tối ưu cho training trong thời gian giới hạn
-"""
-
 import torch
 from pathlib import Path
 
 class Config:
-    """Global configuration tối ưu cho Colab"""
-    
     # Paths
     PROJECT_ROOT = Path(__file__).parent.parent
     DATA_DIR = PROJECT_ROOT / 'data'
@@ -23,7 +16,7 @@ class Config:
     PROCESSED_DATA_PATH = PROCESSED_DATA_DIR / 'processed_data.pkl'
     
     # Model - USE TINY/SMALL FOR FASTER TRAINING
-    MODEL_SIZE = 'tiny'  # 'tiny' nhanh nhất, 'small' cân bằng, 'base' chậm
+    MODEL_SIZE = 'tiny'  # 'tiny', 'small', 'base', 'large'
     PAD_IDX = 0
     
     # Training - OPTIMIZED FOR COLAB 2-HOUR LIMIT
@@ -53,7 +46,7 @@ class Config:
     def print_config(cls):
         """In ra cấu hình hiện tại"""
         print("="*70)
-        print("⚙️  TRAINING CONFIGURATION (OPTIMIZED FOR COLAB)")
+        print(" TRAINING CONFIGURATION (OPTIMIZED FOR COLAB)")
         print("="*70)
         print(f"Model Size:           {cls.MODEL_SIZE}")
         print(f"Batch Size:           {cls.BATCH_SIZE}")
@@ -63,7 +56,7 @@ class Config:
         print(f"Device:               {cls.DEVICE}")
         print("="*70)
         if cls.USE_AMP and torch.cuda.is_available():
-            print("✅ Mixed Precision enabled - Training will be ~2x faster!")
+            print(" Mixed Precision enabled - Training will be ~2x faster!")
         if cls.SAVE_EVERY_BATCHES <= 1000:
-            print(f"✅ Checkpoint every {cls.SAVE_EVERY_BATCHES} batches - Safe for 2h limit!")
+            print(f" Checkpoint every {cls.SAVE_EVERY_BATCHES} batches - Safe for 2h limit!")
         print("="*70)
