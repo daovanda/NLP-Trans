@@ -6,7 +6,7 @@ Các file model, vocal nằm ở data/processed
 
 https://drive.google.com/drive/u/2/folders/1kp4_GocTuke2wuYqyuJXSa_4uukLj_r_  
 
-rồi để vào src/checkpoints/en-vi (vi-en) tương ứng (chú ý copy đầy đủ link)
+rồi để vào src\checkpoints\en_vi\abcxyz.pt ,  src\checkpoints\vi_en\abcxyz.pt tương ứng (chú ý copy đầy đủ link)
 
 Sau đó chạy (cd src)  python complete_pipeline.py --all  --vi-file D:\NLP\NLP_Trans\data\test.vi --en-file D:\NLP\NLP_Trans\data\test.en  --test-samples 500  --use-comet  --comet-gpus 0
 
